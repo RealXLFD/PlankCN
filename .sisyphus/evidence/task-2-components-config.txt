@@ -1,0 +1,9 @@
+2026-03-11 Task 2 config verification
+- components.json: style=new-york, tailwind.css=src/app.css, tailwind.baseColor=zinc, tailwind.cssVariables=true
+- aliases: components=/components, ui=/components/ui, utils=/utils, hooks=/hooks, lib=
+- svelte.config.js: no extra alias normalization required for this task because generated imports stay on -based aliases
+- Generated top-level UI directories: button, separator, sidebar; sidebar add also emitted sheet, tooltip, input, skeleton, and src/lib/hooks/is-mobile.svelte.ts as CLI-managed dependencies
+
+- aliases (corrected): components=$lib/components, ui=$lib/components/ui, utils=$lib/utils, hooks=$lib/hooks, lib=$lib
+- note (corrected): svelte.config.js needed no extra alias normalization because generated imports already use $lib-based aliases
+

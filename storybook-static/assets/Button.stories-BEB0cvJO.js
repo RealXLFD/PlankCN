@@ -1,0 +1,3 @@
+import{p as n,Q as r,l as i,m as u}from"./iframe-bdiQT3di.js";import{B as c,g as l,i as f,h as p}from"./create-runtime-stories-CnfPsNpB.js";import"./preload-helper-PPVm8Dsz.js";const m={title:"UI/Button",component:c,args:{variant:"default",size:"default"}},{Story:_}=p();function t(e,a){n(a,!1),f(),_(e,{name:"Default Action",children:(s,v)=>{var o=r("Save changes");i(s,o)},$$slots:{default:!0},parameters:{__svelteCsf:{rawCode:`<Button {...args}>
+  Save changes
+</Button>`}}}),u()}t.__docgen={data:[],name:"Button.stories.svelte"};const d=l(t,m),h=["DefaultAction"],A={...d.DefaultAction,tags:["svelte-csf-v5"]};export{A as DefaultAction,h as __namedExportsOrder,m as default};

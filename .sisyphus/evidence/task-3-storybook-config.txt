@@ -1,0 +1,15 @@
+2026-03-11 Task 3 Storybook configuration evidence
+
+Files normalized:
+- `.storybook/main.ts` uses `@storybook/sveltekit` as the framework and includes `@storybook/addon-svelte-csf` in `addons`.
+- `.storybook/preview.ts` imports `../src/app.css` and defines a global `theme` toolbar with `light` and `dark` values.
+- `.storybook/preview.ts` applies the selected theme by toggling `document.documentElement` classes and `colorScheme`, with no use of SvelteKit route APIs.
+- `package.json` exposes the real QA/story scripts `check`, `test:unit`, `test:e2e`, `storybook`, and `build-storybook`.
+
+Drift checks:
+- Search for `@storybook/svelte-vite`, `storybook-builder-vite`, `@storybook/builder-vite`, and `svelteOptions`: no matches.
+- Search for demo Storybook and Playwright artifacts (`demo.test`, `demo.spec`, `Button.stories`, `Header.stories`, `Page.stories`, `Example/`): no matches under `src`, `tests`, `.storybook`, or removed `e2e` content.
+
+Usability fix:
+- Added `src/lib/components/ui/button/Button.stories.svelte` as the smallest real, non-demo story wired to the existing `Button` primitive.
+- Live Storybook dev QA confirmed the `UI / Button / Default Action` story appears in the sidebar, the preview iframe renders the real button, and the light/dark toolbar control remains visible.

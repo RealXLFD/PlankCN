@@ -1,0 +1,26 @@
+2026-03-11 reduced-motion fallback evidence
+
+Source intent checks
+- `src/lib/components/app/mode-toggle.svelte` still imports `mode`/`setMode` from `mode-watcher` and keeps `aria-label="Toggle dark mode"` plus the `startViewTransition` reveal wiring.
+- `src/lib/components/app/mode-toggle.svelte` contains no `system` mode UI handling.
+
+Reduced-motion verification
+- `src/lib/components/app/mode-toggle.test.ts` includes `falls back to an immediate toggle when reduced motion is preferred`.
+- The test installs a dedicated Storage shim via `Object.defineProperty(globalThis, 'localStorage', ...)` and verifies that the reduced-motion branch:
+  - does not call `startViewTransition`
+  - still writes `mode-watcher-mode=dark`
+  - still applies the root `dark` class and `colorScheme = 'dark'`
+
+Suite evidence
+- `bun run test:unit` passed with 3/3 tests green, including the reduced-motion fallback case.
+2026-03-11 reduced-motion evidence:
+- `src/lib/components/app/mode-toggle.test.ts` covers the reduced-motion branch by setting `matchMedia('(prefers-reduced-motion: reduce)')` to `true` and providing a `startViewTransition` mock.
+- Assertion result: the helper returns `immediate`, does not call `startViewTransition`, does not animate the reveal, and applies `light` when the current mode starts at `dark`.
+- Verification source: `bun run test:unit` passed with the reduced-motion fallback test included in the 3-test suite.
+2026-03-11 story runtime verification:
+- `src/lib/components/app/mode-toggle.stories.svelte` no longer mutates `mode-watcher` during snippet evaluation.
+- Forced mode is applied from a Svelte action after render, which preserves the reduced-motion story environment without triggering `state_unsafe_mutation` in Storybook.
+- Browser verification on the Light and Dark Storybook routes reported 0 console errors.
+2026-03-11 transition runtime verification:
+- The Storybook runtime fix preserves the same reduced-motion and animated code paths in `src/lib/components/app/mode-toggle.svelte`; only the `document.startViewTransition` invocation style changed.
+- Clicking the Dark story toggle now succeeds without `Illegal invocation`, confirming the animated browser path can call the transition API safely.

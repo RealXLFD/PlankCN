@@ -1,0 +1,11 @@
+2026-03-11 verification summary
+- `bun install`: passed; dependencies were already installed by the scaffold, `prepare` ran `svelte-kit sync`, and Bun reported no changes across installed packages.
+- `bun run check`: passed; `svelte-kit sync && svelte-check --tsconfig ./tsconfig.json` completed with 0 errors and 0 warnings.
+- `bun run build`: passed; Vite built both client and server bundles successfully and adapter-auto finished with its normal local-environment notice.
+- Build note: Vite emitted a Rollup circular chunk warning involving generated Svelte internal modules (`tick` reexport path), but the command still exited successfully.
+
+2026-03-11 QA fix verification update
+- `bun run test:e2e`: now fails intentionally with exit code 1 and message `Placeholder only: Playwright is not configured in task 1.`
+- `bun run storybook`: now fails intentionally with exit code 1 and message `Placeholder only: Storybook is not configured in task 1.`
+- `bun run build-storybook`: now fails intentionally with exit code 1 and message `Placeholder only: Storybook build is not configured in task 1.`
+- `bun install`, `bun run check`, and `bun run build`: rerun after the fix and still passed.

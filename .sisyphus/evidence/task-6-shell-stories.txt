@@ -1,0 +1,73 @@
+2026-03-11 Task 6 shell story evidence
+
+Files added:
+- src/lib/components/app/app-shell.svelte
+- src/lib/components/app/app-sidebar.svelte
+- src/lib/components/app/app-topbar.svelte
+- src/lib/components/app/main-view.svelte
+- src/lib/components/app/app-shell.stories.svelte
+
+Storybook build:
+- Command: `bun run build-storybook`
+- Result: exit 0
+- Output highlights:
+  - built `storybook-static/assets/app-shell.stories-*.js`
+  - output directory `/Users/realxlfd/Desktop/Todo/shadcn-startup/storybook-static`
+  - non-blocking Vite chunk-size warning only
+
+Browser verification against built Storybook:
+- Served `storybook-static` at `http://127.0.0.1:4173`
+- Verified manager-page story URLs:
+  - `/index.html?path=/story/app-appshell--desktop-expanded`
+  - `/index.html?path=/story/app-appshell--desktop-collapsed`
+  - `/index.html?path=/story/app-appshell--mobile-drawer-open`
+- Playwright results:
+  - Desktop Expanded: loaded, snapshot showed trigger + separator + dark-mode toggle, console errors = 0
+  - Desktop Collapsed: loaded, snapshot showed trigger + separator + dark-mode toggle, console errors = 0
+  - Mobile Drawer Open: loaded with `globals=viewport.value:mobile1`, snapshot showed active `dialog "Sidebar"`, console errors = 0
+
+Story state summary:
+- `Desktop Expanded` => `open: true`, `mobileOpen: false`
+- `Desktop Collapsed` => `open: false`, `mobileOpen: false`
+- `Mobile Drawer Open` => `open: true`, `mobileOpen: true`, viewport global pinned to `mobile1`
+
+2026-03-11 follow-up fix verification
+
+Mobile selector fix:
+- Updated `src/lib/components/ui/sidebar/sidebar.svelte` so the mobile branch spreads `Sidebar.Root` rest props onto the visible `Sheet.Content` surface instead of `Sheet.Root`
+- Result: the mobile drawer story now exposes `data-testid="app-sidebar"` on the visible sidebar surface
+
+Commands run:
+- `bun run build-storybook`
+- `python3 -m http.server 4173 --directory "/Users/realxlfd/Desktop/Todo/shadcn-startup/storybook-static"`
+
+Playwright browser verification:
+- URL checked: `http://127.0.0.1:4173/index.html?path=/story/app-appshell--mobile-drawer-open`
+- Viewport: `390x844`
+- Frame evaluation result:
+  - `storyExists: true`
+  - `sidebarCount: 1`
+  - `mobileSidebarSlotCount: 1`
+  - `dialogCount: 1`
+- Console errors: `0`
+
+2026-03-11 collapse-trigger visual parity follow-up
+
+Files changed:
+- `src/lib/components/app/app-topbar.svelte`
+
+Implementation notes:
+- Replaced the top-left `Sidebar.Trigger` visual treatment with the same button contract used by `ModeToggle`: `variant="outline"`, `size="icon-sm"`, and a caller-side `size-8` override to neutralize the trigger's built-in `size-7`
+- Kept `aria-label="Toggle sidebar"` and the existing collapse icon unchanged
+- Removed the vertical separator from `AppTopbar`
+- Left `src/lib/components/app/app-shell.stories.svelte` unchanged because its existing `AppShell` stories already render the shared `AppTopbar`
+
+Static verification:
+- `grep` on `src/lib/components/app/app-topbar.svelte` found no remaining `Separator` or `orientation="vertical"` usage
+- `lsp_diagnostics` on `src/lib/components/app/app-topbar.svelte` returned no diagnostics
+
+Command verification:
+- `bun run test:unit --run src/lib/components/app/app-shell.test.ts` => exit 0 (`2 passed`)
+- `bun run check` => exit 0 (`svelte-check found 0 errors and 0 warnings`)
+- `bun run build-storybook` => exit 0; built `storybook-static/assets/app-shell.stories-*.js`; only non-blocking `src/**/*.mdx` missing-story notice and chunk-size warning
+- `bun run build` => exit 0; same pre-existing non-blocking circular chunk warnings involving Svelte runtime / `mode-watcher`, no new errors
