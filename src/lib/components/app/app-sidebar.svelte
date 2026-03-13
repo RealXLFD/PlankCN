@@ -10,4 +10,4 @@
 	});
 </script>
 
-<Sidebar.Root data-testid="app-sidebar" collapsible="icon" />
+<Sidebar.Root data-testid="app-sidebar" collapsible="offcanvas" />

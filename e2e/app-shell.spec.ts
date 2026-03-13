@@ -58,7 +58,7 @@ test.describe("app shell route", () => {
 				{ intervals: [250, 500, 1000], timeout: 10000 }
 			)
 			.toBe("collapsed");
-		await expect(sidebarState).toHaveAttribute("data-collapsible", "icon");
+		await expect(sidebarState).toHaveAttribute("data-collapsible", "offcanvas");
 
 		await expect
 			.poll(
@@ -153,7 +153,7 @@ test.describe("app shell route", () => {
 		});
 
 		await page.keyboard.press("Escape");
-		await expect(mobileSidebar).toBeHidden();
+		await expect(mobileSidebar).toHaveAttribute("data-state", "closed");
 
 		expect([...consoleMessages, ...pageErrors]).toEqual([]);
 	});

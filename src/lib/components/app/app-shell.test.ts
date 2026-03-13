@@ -33,8 +33,9 @@ describe('AppShell rendered output', () => {
 		const html = renderShell({ open: false });
 
 		expect(html).toContain('data-testid="app-sidebar"');
-		expect(html).toContain('data-testid="main-view" class="flex-1 overflow-auto"');
+		expect(html).toContain('data-testid="main-view" class="min-h-0 min-w-0 flex-1 overflow-auto"');
 		expect(html).toContain('data-state="collapsed"');
+		expect(html).toContain('data-collapsible="offcanvas"');
 		expect(html).not.toContain('TaskFlux');
 		expect(html).not.toContain('placeholder');
 		expect(html).not.toContain('Sidebar.Header');
