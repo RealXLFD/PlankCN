@@ -5,7 +5,7 @@
 	import ModeToggle from './mode-toggle.svelte';
 
 	type Args = {
-		forcedMode: 'light' | 'dark';
+		forcedMode: 'light' | 'dark' | 'system';
 	};
 
 	const { Story } = defineMeta<Snippet<[Args, unknown]>, typeof ModeToggle>({
@@ -54,6 +54,17 @@
 </Story>
 
 <Story name="Dark" args={{ forcedMode: 'dark' }}>
+	{#snippet template({ forcedMode }: Args)}
+		<div
+			use:forceMode={forcedMode}
+			class="flex min-h-40 items-center justify-center bg-background p-8 text-foreground"
+		>
+			<ModeToggle />
+		</div>
+	{/snippet}
+</Story>
+
+<Story name="System" args={{ forcedMode: 'system' }}>
 	{#snippet template({ forcedMode }: Args)}
 		<div
 			use:forceMode={forcedMode}
