@@ -1,4 +1,0 @@
-2026-03-11 lockfile summary
-- Verified with `rg --files -g 'package-lock.json' -g 'pnpm-lock.yaml' -g 'yarn.lock'` from the workspace root.
-- Result: no `package-lock.json`, `pnpm-lock.yaml`, or `yarn.lock` files were found.
-- Bun remains the only package manager represented by a lockfile via `bun.lock`.

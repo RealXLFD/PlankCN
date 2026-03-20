@@ -1,9 +1,0 @@
-2026-03-11 task 4 theme foundation
-- Installed `mode-watcher@1.1.0` with Bun; `package.json` and `bun.lock` now include the dependency.
-- Updated `src/routes/+layout.svelte` to keep `../app.css`, preserve the existing favicon link, and render `<ModeWatcher />` before the root children render path.
-- Updated `src/app.css` to keep the zinc light/dark token set and sidebar tokens, retain the `@theme inline` mappings, and add the TaskFlux-style base layer for `color-scheme`, thin scrollbars, and body background/foreground styling.
-- Verification:
-  - `lsp_diagnostics src/routes/+layout.svelte`: no diagnostics.
-  - `lsp_diagnostics src/app.css`: Biome parse errors on Tailwind v4 directives (`@custom-variant`, `@theme`, `@apply`); this is a tooling/parser limitation on the CSS entrypoint, not a `svelte-check` or build failure.
-  - `bun run check`: passed (`svelte-check found 0 errors and 0 warnings`).
-  - `bun run build`: passed (exit 0). Non-blocking circular chunk warnings still appear and now also mention `mode-watcher`/`runed` in the same Svelte runtime warning family.

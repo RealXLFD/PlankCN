@@ -1,5 +1,0 @@
-2026-03-11 task 4 palette scope
-- Verified `src/app.css` keeps the narrow zinc light/dark palette plus sidebar variables only.
-- `grep "data-theme='(neutral|stone|slate|gray)'" src/app.css`: no matches.
-- Verified sidebar theme tokens remain present in `src/app.css`: `--sidebar`, `--sidebar-foreground`, `--sidebar-primary`, `--sidebar-accent`, `--sidebar-border`, and `--sidebar-ring`, plus their `@theme inline` color mappings.
-- Related test coverage search found no theme- or layout-specific test files in project sources; the only project-owned test file remains `tests/e2e/smoke.test.ts`, so task verification relied on `bun run check` and `bun run build` as required by the plan.

@@ -1,7 +1,0 @@
-2026-03-11 Task 2 baseline verification
-- Command: bun run check
-- Result: PASS (svelte-check found 0 errors and 0 warnings)
-- Command: bun run build
-- Result: PASS (Vite production build completed; adapter-auto reported the expected no-target-environment notice after build)
-- Note: shadcn-svelte v1.1.1 generated additional sidebar support files when adding sidebar: sheet, tooltip, input, skeleton, and src/lib/hooks/is-mobile.svelte.ts.
-
