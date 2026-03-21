@@ -6,7 +6,7 @@
 	import FileTextIcon from "@lucide/svelte/icons/file-text";
 	import XIcon from "@lucide/svelte/icons/x";
 	import type { Card, LabelColor } from "$lib/stores/board.svelte";
-	import { LABEL_COLORS, LABEL_PALETTE, COVER_COLORS, getDueDateStatus, getSettingsStore } from "$lib/stores/board.svelte";
+	import { LABEL_COLORS, LABEL_PALETTE, COVER_COLORS, getSettingsStore } from "$lib/stores/board.svelte";
 	import { onMount } from "svelte";
 
 	const settings = getSettingsStore();
@@ -30,7 +30,7 @@
 	let editTitle = $state('');
 	let editDescription = $state('');
 	let editDueDate = $state('');
-	let panelRef: HTMLDivElement | undefined = $state();
+	let mounted = $state(false);
 
 	$effect(() => {
 		if (open) {
@@ -38,6 +38,10 @@
 			editDescription = card.description ?? '';
 			editDueDate = card.dueDate ? new Date(card.dueDate).toISOString().split('T')[0] : '';
 		}
+	});
+
+	onMount(() => {
+		mounted = true;
 	});
 
 	function saveTitle() {
@@ -98,39 +102,43 @@
 		}
 	}
 
+	$effect(() => {
+		if (open) {
+			document.addEventListener('keydown', closeOnEscape);
+		} else {
+			document.removeEventListener('keydown', closeOnEscape);
+		}
+		return () => document.removeEventListener('keydown', closeOnEscape);
+	});
+
 	const panelPosition = $derived.by(() => {
 		const panelWidth = 320;
 		const estimatedHeight = 420;
 		const padding = 16;
-		const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1000;
-		const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 800;
 
 		let x = position.x + 10;
 		let y = position.y + 10;
 
-		if (x + panelWidth + padding > viewportWidth) {
-			x = position.x - panelWidth - 10;
-		}
-		if (y + estimatedHeight + padding > viewportHeight) {
-			y = viewportHeight - estimatedHeight - padding;
-		}
-		if (x < padding) {
-			x = padding;
-		}
-		if (y < padding) {
-			y = padding;
+		if (typeof window !== 'undefined') {
+			if (x + panelWidth + padding > window.innerWidth) {
+				x = position.x - panelWidth - 10;
+			}
+			if (y + estimatedHeight + padding > window.innerHeight) {
+				y = window.innerHeight - estimatedHeight - padding;
+			}
+			if (x < padding) {
+				x = padding;
+			}
+			if (y < padding) {
+				y = padding;
+			}
 		}
 
 		return { x, y };
 	});
-
-	onMount(() => {
-		document.addEventListener('keydown', closeOnEscape);
-		return () => document.removeEventListener('keydown', closeOnEscape);
-	});
 </script>
 
-{#if open}
+{#if open && mounted}
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<div
 		class="fixed inset-0 z-[99998]"
@@ -143,17 +151,15 @@
 
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<div
-		bind:this={panelRef}
 		role="dialog"
 		aria-label="编辑卡片"
 		aria-modal="true"
 		tabindex="-1"
-		class="fixed z-[99999] w-80 rounded-xl border border-border/50 bg-background/95 backdrop-blur-xl shadow-2xl"
+		class="fixed z-[99999] w-80 rounded-xl border border-border/50 bg-background/95 shadow-2xl"
 		style="left: {panelPosition.x}px; top: {panelPosition.y}px; backdrop-filter: blur({settings.blurLevel}px); -webkit-backdrop-filter: blur({settings.blurLevel}px);"
 		onclick={(e) => e.stopPropagation()}
 		onkeydown={(e) => e.stopPropagation()}
 	>
-		<!-- Header -->
 		<div class="flex items-center justify-between border-b px-4 py-3">
 			<div>
 				<h2 class="text-sm font-semibold">编辑卡片</h2>
@@ -170,7 +176,6 @@
 
 		<div class="max-h-[60vh] overflow-y-auto p-4">
 			<div class="flex flex-col gap-5">
-				<!-- Title -->
 				<div>
 					<div class="mb-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">标题</div>
 					<input
@@ -182,7 +187,6 @@
 					/>
 				</div>
 
-				<!-- Labels -->
 				<div>
 					<div class="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
 						<TagIcon class="h-3 w-3" />
@@ -200,7 +204,6 @@
 					</div>
 				</div>
 
-				<!-- Due date -->
 				<div>
 					<div class="mb-1.5 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
 						<CalendarIcon class="h-3 w-3" />
@@ -226,7 +229,6 @@
 					</div>
 				</div>
 
-				<!-- Cover color -->
 				<div>
 					<div class="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
 						<PaletteIcon class="h-3 w-3" />
@@ -250,7 +252,6 @@
 					</div>
 				</div>
 
-				<!-- Description -->
 				<div>
 					<div class="mb-1.5 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
 						<FileTextIcon class="h-3 w-3" />
@@ -268,7 +269,6 @@
 			</div>
 		</div>
 
-		<!-- Footer -->
 		<div class="border-t px-4 py-3">
 			<button
 				onclick={handleDelete}

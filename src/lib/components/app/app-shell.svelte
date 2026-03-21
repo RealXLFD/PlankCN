@@ -174,7 +174,7 @@
 
 	<!-- Board -->
 	<main class="relative z-10 min-h-0 flex-1 overflow-hidden">
-		<div style="transform: scale({settings.viewScale / 100}); transform-origin: top left; width: {10000 / settings.viewScale}%; height: {10000 / settings.viewScale}%;">
+		<div style="zoom: {settings.viewScale / 100}; transform-origin: top left;">
 			<BoardView />
 		</div>
 	</main>
