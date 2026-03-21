@@ -20,9 +20,11 @@
 	} = $props();
 
 	let detailOpen = $state(false);
+	let detailPosition = $state({ x: 0, y: 0 });
 
 	function handleClick(e: MouseEvent) {
 		if ((e.target as HTMLElement).closest('[data-grip]')) return;
+		detailPosition = { x: e.clientX, y: e.clientY };
 		detailOpen = true;
 	}
 
@@ -30,6 +32,8 @@
 		if (e.key === ' ') {
 			if ((e.target as HTMLElement).closest('[data-grip]')) return;
 			e.preventDefault();
+			const rect = (e.target as HTMLElement).getBoundingClientRect();
+			detailPosition = { x: rect.left + rect.width / 2, y: rect.top };
 			detailOpen = true;
 		}
 	}
@@ -104,6 +108,7 @@
 	{card}
 	{listTitle}
 	bind:open={detailOpen}
+	bind:position={detailPosition}
 	{onupdate}
 	{onremove}
 />
