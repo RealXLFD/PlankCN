@@ -31,41 +31,12 @@
 	let editDescription = $state('');
 	let editDueDate = $state('');
 	let panelRef: HTMLDivElement | undefined = $state();
-	let calculatedPosition = $state({ x: 0, y: 0 });
 
 	$effect(() => {
 		if (open) {
 			editTitle = card.title;
 			editDescription = card.description ?? '';
 			editDueDate = card.dueDate ? new Date(card.dueDate).toISOString().split('T')[0] : '';
-		}
-	});
-
-	$effect(() => {
-		if (open && panelRef) {
-			const panelWidth = 320;
-			const panelHeight = panelRef.offsetHeight || 400;
-			const padding = 16;
-			const viewportWidth = window.innerWidth;
-			const viewportHeight = window.innerHeight;
-
-			let x = position.x;
-			let y = position.y;
-
-			if (x + panelWidth + padding > viewportWidth) {
-				x = viewportWidth - panelWidth - padding;
-			}
-			if (x < padding) {
-				x = padding;
-			}
-			if (y + panelHeight + padding > viewportHeight) {
-				y = viewportHeight - panelHeight - padding;
-			}
-			if (y < padding) {
-				y = padding;
-			}
-
-			calculatedPosition = { x, y };
 		}
 	});
 
@@ -127,6 +98,32 @@
 		}
 	}
 
+	const panelPosition = $derived.by(() => {
+		const panelWidth = 320;
+		const estimatedHeight = 420;
+		const padding = 16;
+		const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1000;
+		const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 800;
+
+		let x = position.x + 10;
+		let y = position.y + 10;
+
+		if (x + panelWidth + padding > viewportWidth) {
+			x = position.x - panelWidth - 10;
+		}
+		if (y + estimatedHeight + padding > viewportHeight) {
+			y = viewportHeight - estimatedHeight - padding;
+		}
+		if (x < padding) {
+			x = padding;
+		}
+		if (y < padding) {
+			y = padding;
+		}
+
+		return { x, y };
+	});
+
 	onMount(() => {
 		document.addEventListener('keydown', closeOnEscape);
 		return () => document.removeEventListener('keydown', closeOnEscape);
@@ -136,7 +133,7 @@
 {#if open}
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<div
-		class="fixed inset-0 z-[9998]"
+		class="fixed inset-0 z-[99998]"
 		onclick={() => open = false}
 		onkeydown={(e) => { if (e.key === 'Escape') open = false; }}
 		role="button"
@@ -151,8 +148,8 @@
 		aria-label="编辑卡片"
 		aria-modal="true"
 		tabindex="-1"
-		class="fixed z-[9999] w-80 rounded-xl border bg-background/95 backdrop-blur-xl shadow-2xl"
-		style="left: {calculatedPosition.x}px; top: {calculatedPosition.y}px; backdrop-filter: blur({settings.blurLevel}px); -webkit-backdrop-filter: blur({settings.blurLevel}px);"
+		class="fixed z-[99999] w-80 rounded-xl border border-border/50 bg-background/95 backdrop-blur-xl shadow-2xl"
+		style="left: {panelPosition.x}px; top: {panelPosition.y}px; backdrop-filter: blur({settings.blurLevel}px); -webkit-backdrop-filter: blur({settings.blurLevel}px);"
 		onclick={(e) => e.stopPropagation()}
 		onkeydown={(e) => e.stopPropagation()}
 	>
