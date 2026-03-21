@@ -54,7 +54,7 @@
 >
 	<!-- Cover color bar -->
 	{#if card.coverColor}
-		<div class="h-1.5 rounded-t-lg {COVER_COLORS[card.coverColor]}"></div>
+		<div class="h-1.5 rounded-t-xl {COVER_COLORS[card.coverColor]}"></div>
 	{/if}
 
 	<div class="px-3 py-2.5">
