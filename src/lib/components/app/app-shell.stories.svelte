@@ -7,10 +7,6 @@
 	const { Story } = defineMeta({
 		title: 'App/AppShell',
 		component: AppShell,
-		args: {
-			open: true,
-			mobileOpen: false
-		},
 		parameters: {
 			layout: 'fullscreen',
 			viewport: {
@@ -20,12 +16,4 @@
 	});
 </script>
 
-<Story name="Desktop Expanded" args={{ open: true, mobileOpen: false }} />
-
-<Story name="Desktop Collapsed" args={{ open: false, mobileOpen: false }} />
-
-<Story
-	name="Mobile Drawer Open"
-	args={{ open: true, mobileOpen: true }}
-	globals={{ viewport: { value: 'mobile1', isRotated: false } }}
-/>
+<Story name="Default" />

@@ -23,88 +23,48 @@ test.describe("app shell route", () => {
 		});
 	});
 
-	test("renders the desktop shell, toggles the sidebar, switches theme, and switches to dark mode", async ({
-		browser,
-		context,
-		page
-	}) => {
+	test("renders the app shell with board interface", async ({ page }) => {
 		await page.setViewportSize({ width: 1440, height: 960 });
 		await gotoStableShell(page);
 
 		await expect(page.getByTestId("app-shell")).toBeVisible();
-		await expect(page.getByTestId("app-topbar")).toBeVisible();
-		await expect(page.getByTestId("app-sidebar")).toBeVisible();
-		await expect(page.getByTestId("main-view")).toBeVisible();
-
-		const sidebarState = page
-			.getByTestId("app-sidebar")
-			.locator("xpath=ancestor::*[@data-slot='sidebar'][1]");
-		const toggleSidebarButton = page.getByRole("button", { name: "Toggle sidebar" });
-
-		await expect(sidebarState).toHaveAttribute("data-state", "expanded");
-		await expect(sidebarState).toHaveAttribute("data-collapsible", "");
+		await expect(page.getByText("PlankCN")).toBeVisible();
+		await expect(page.getByPlaceholder("搜索卡片...")).toBeVisible();
+		await expect(page.getByRole("button", { name: "重置布局" })).toBeVisible();
+		await expect(page.getByRole("button", { name: "清空看板" })).toBeVisible();
+		await expect(page.getByRole("button", { name: "上传背景" })).toBeVisible();
+		await expect(page.getByRole("button", { name: "设置" })).toBeVisible();
 
 		await page.screenshot({
 			fullPage: true,
 			path: path.join(evidenceDir, "task-7-shell-desktop.png")
 		});
 
-		await expect
-			.poll(
-				async () => {
-					await toggleSidebarButton.click();
-					return await sidebarState.getAttribute("data-state");
-				},
-				{ intervals: [250, 500, 1000], timeout: 10000 }
-			)
-			.toBe("collapsed");
-		await expect(sidebarState).toHaveAttribute("data-collapsible", "offcanvas");
+		await page.getByRole("button", { name: "设置" }).click();
+		await expect(page.getByText("面板模糊度")).toBeVisible();
+		await expect(page.getByText("视图缩放")).toBeVisible();
 
-		await expect
-			.poll(
-				async () => {
-					await toggleSidebarButton.click();
-					return await sidebarState.getAttribute("data-state");
-				},
-				{ intervals: [250, 500, 1000], timeout: 10000 }
-			)
-			.toBe("expanded");
-		await expect(sidebarState).toHaveAttribute("data-collapsible", "");
+		await page.screenshot({
+			fullPage: true,
+			path: path.join(evidenceDir, "task-7-shell-desktop-settings.png")
+		});
+	});
 
-		await page.getByRole("button", { name: "切换主题" }).click();
-		await page.getByRole("menuitemradio", { name: "Slate" }).click();
-		await expect(page.locator("html")).toHaveAttribute("data-theme", "slate");
-		await expect
-			.poll(async () => await page.evaluate(() => window.localStorage.getItem("shadcn-startup-theme")))
-			.toBe("slate");
+	test("theme toggle persists across reloads", async ({ browser, context, page }) => {
+		await page.setViewportSize({ width: 1440, height: 960 });
+		await gotoStableShell(page);
 
-		const persistedThemeContext = await browser.newContext({
+		await page.getByRole("button", { name: "切换亮暗模式" }).click();
+		await expect(page.locator("html")).toHaveClass(/dark/);
+
+		const persistedContext = await browser.newContext({
 			storageState: await context.storageState()
 		});
-		const persistedPage = await persistedThemeContext.newPage();
+		const persistedPage = await persistedContext.newPage();
 		await persistedPage.goto("/");
 		await expect(persistedPage.getByTestId("app-shell")).toBeVisible();
-		await expect(persistedPage.locator("html")).toHaveAttribute("data-theme", "slate");
-		await persistedThemeContext.close();
-
-		await expect
-			.poll(
-				async () => {
-					await page.getByRole("button", { name: "切换亮暗模式" }).click();
-					return (await page.locator("html").getAttribute("class")) ?? "";
-				},
-				{ intervals: [250, 500, 1000], timeout: 10000 }
-			)
-			.toMatch(/dark/);
-
-		const persistedDarkContext = await browser.newContext({
-			storageState: await context.storageState()
-		});
-		const persistedDarkPage = await persistedDarkContext.newPage();
-		await persistedDarkPage.goto("/");
-		await expect(persistedDarkPage.getByTestId("app-shell")).toBeVisible();
-		await expect(persistedDarkPage.locator("html")).toHaveClass(/dark/);
-		await persistedDarkContext.close();
+		await expect(persistedPage.locator("html")).toHaveClass(/dark/);
+		await persistedContext.close();
 
 		await page.screenshot({
 			fullPage: true,
@@ -112,7 +72,7 @@ test.describe("app shell route", () => {
 		});
 	});
 
-	test("renders the mobile shell drawer without console noise", async ({ page }) => {
+	test("renders the mobile app shell without console noise", async ({ page }) => {
 		const consoleMessages: string[] = [];
 		const pageErrors: string[] = [];
 
@@ -130,30 +90,12 @@ test.describe("app shell route", () => {
 		await gotoStableShell(page);
 
 		await expect(page.getByTestId("app-shell")).toBeVisible();
-		await expect(page.getByTestId("app-topbar")).toBeVisible();
-		await expect(page.getByTestId("main-view")).toBeVisible();
-
-		const toggleSidebarButton = page.getByRole("button", { name: "Toggle sidebar" });
-		const mobileSidebar = page.locator('[data-testid="app-sidebar"][data-mobile="true"]');
-		await expect
-			.poll(
-				async () => {
-					await toggleSidebarButton.click();
-					return await mobileSidebar.count();
-				},
-				{ intervals: [250, 500, 1000], timeout: 10000 }
-			)
-			.toBe(1);
-		await expect(mobileSidebar).toBeVisible();
-		await expect(mobileSidebar).toHaveAttribute("data-mobile", "true");
+		await expect(page.getByText("PlankCN")).toBeVisible();
 
 		await page.screenshot({
 			fullPage: true,
 			path: path.join(evidenceDir, "task-7-shell-mobile.png")
 		});
-
-		await page.keyboard.press("Escape");
-		await expect(mobileSidebar).toHaveAttribute("data-state", "closed");
 
 		expect([...consoleMessages, ...pageErrors]).toEqual([]);
 	});

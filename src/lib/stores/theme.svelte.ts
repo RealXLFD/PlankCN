@@ -2,8 +2,8 @@ export type ThemeName = 'zinc' | 'neutral' | 'stone' | 'slate' | 'gray';
 export type ThemeMode = 'light' | 'dark' | 'system';
 export type ResolvedMode = Exclude<ThemeMode, 'system'>;
 
-const THEME_KEY = 'shadcn-startup-theme';
-const MODE_KEY = 'shadcn-startup-mode';
+const THEME_KEY = 'trellocn-theme';
+const MODE_KEY = 'trellocn-mode';
 
 const THEMES = ['zinc', 'neutral', 'stone', 'slate', 'gray'] as const;
 const MODES = ['light', 'dark', 'system'] as const;

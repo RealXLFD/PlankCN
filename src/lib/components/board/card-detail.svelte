@@ -93,6 +93,7 @@
 				<input
 					bind:value={editTitle}
 					onblur={saveTitle}
+					aria-label="卡片标题"
 					onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); saveTitle(); (e.target as HTMLInputElement).blur(); } }}
 					class="w-full rounded-lg border bg-muted/50 px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
 				/>
@@ -127,6 +128,7 @@
 						type="date"
 						bind:value={editDueDate}
 						onchange={saveDueDate}
+						aria-label="截止日期"
 						class="flex-1 rounded-lg border bg-muted/50 px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
 					/>
 					{#if editDueDate}
@@ -174,6 +176,7 @@
 				<textarea
 					bind:value={editDescription}
 					onblur={saveDescription}
+					aria-label="卡片描述"
 					class="w-full resize-none rounded-lg border bg-muted/50 px-3 py-2.5 text-sm placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-ring"
 					rows="5"
 					placeholder="添加描述..."

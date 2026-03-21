@@ -56,13 +56,42 @@
 			}
 		}
 
+		function handleKeyDown(e: KeyboardEvent) {
+			if (e.key === 'n' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+				const activeEl = document.activeElement;
+				const isInputFocused = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'SELECT' || (activeEl as HTMLElement).isContentEditable);
+				if (isInputFocused) return;
+				
+				if (search.query.trim()) return;
+				
+				e.preventDefault();
+				
+				const lists = store.lists;
+				let newX = 20;
+				let newY = 20;
+				
+				if (lists.length > 0) {
+					const lastList = lists[lists.length - 1];
+					newX = lastList.position.x + 340;
+					newY = lastList.position.y;
+				}
+				
+				contextMenu = { x: newX, y: newY, visible: true };
+				newListTitle = '';
+				inputFocused = false;
+				requestAnimationFrame(() => newListInput?.focus());
+			}
+		}
+
 		document.addEventListener('click', handleGlobalClick);
 		document.addEventListener('contextmenu', handleGlobalContextMenu);
 		document.addEventListener('keydown', handleEscape);
+		document.addEventListener('keydown', handleKeyDown);
 		return () => {
 			document.removeEventListener('click', handleGlobalClick);
 			document.removeEventListener('contextmenu', handleGlobalContextMenu);
 			document.removeEventListener('keydown', handleEscape);
+			document.removeEventListener('keydown', handleKeyDown);
 		};
 	});
 
@@ -187,19 +216,24 @@
 		</div>
 	{/each}
 
-	{#if contextMenu.visible}
+{#if contextMenu.visible}
 		<div
 			id="context-menu"
+			role="dialog"
+			aria-label="添加列表"
+			tabindex="-1"
 			class="absolute z-[1000] w-80 animate-list-morph-in"
 			style="left: {contextMenu.x}px; top: {contextMenu.y}px;"
 			onclick={(e) => e.stopPropagation()}
 			oncontextmenu={(e) => e.preventDefault()}
+			onkeydown={(e) => { if (e.key === 'Escape') closeContextMenu(); }}
 		>
 			<div class="relative">
 				<input
 					bind:this={newListInput}
 					bind:value={newListTitle}
 					placeholder="添加列表"
+					aria-label="列表标题"
 					class="w-full rounded-xl border border-border/50 bg-background px-4 py-2.5 text-sm shadow-sm placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-ring dark:bg-card/80"
 					style="backdrop-filter: blur({settings.blurLevel}px); -webkit-backdrop-filter: blur({settings.blurLevel}px);"
 					onkeydown={(e) => {

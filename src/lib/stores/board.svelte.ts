@@ -117,19 +117,19 @@ let resetLayoutVersion = $state(0);
 
 function loadBackground(): string | null {
 	if (typeof window === 'undefined') return null;
-	return localStorage.getItem('plankcn-bg');
+	return localStorage.getItem('trellocn-bg');
 }
 
 function loadBlurLevel(): number {
 	if (typeof window === 'undefined') return 12;
-	const v = localStorage.getItem('plankcn-blur');
+	const v = localStorage.getItem('trellocn-blur');
 	return v ? Number(v) : 12;
 }
 
 function loadViewScale(): number {
 	if (typeof window === 'undefined') return 100;
-	const v = localStorage.getItem('plankcn-scale');
-	return v ? Number(v) : 100;
+	const v = localStorage.getItem('trellocn-scale');
+	return v ? Number(v) :100;
 }
 
 function save() {
@@ -150,20 +150,20 @@ export function getSettingsStore() {
 		set backgroundImage(v: string | null) {
 			backgroundImage = v;
 			if (typeof window === 'undefined') return;
-			if (v) localStorage.setItem('plankcn-bg', v);
-			else localStorage.removeItem('plankcn-bg');
+			if (v) localStorage.setItem('trellocn-bg', v);
+			else localStorage.removeItem('trellocn-bg');
 		},
 		get blurLevel() { return blurLevel; },
 		set blurLevel(v: number) {
 			blurLevel = v;
 			if (typeof window === 'undefined') return;
-			localStorage.setItem('plankcn-blur', String(v));
+			localStorage.setItem('trellocn-blur', String(v));
 		},
 		get viewScale() { return viewScale; },
 		set viewScale(v: number) {
 			viewScale = v;
 			if (typeof window === 'undefined') return;
-			localStorage.setItem('plankcn-scale', String(v));
+			localStorage.setItem('trellocn-scale', String(v));
 		},
 	};
 }

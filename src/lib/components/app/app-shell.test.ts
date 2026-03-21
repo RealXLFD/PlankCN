@@ -5,40 +5,35 @@ import { describe, expect, it } from 'vitest';
 
 import AppShell from './app-shell.svelte';
 
-function renderShell(props: Partial<{ open: boolean; mobileOpen: boolean }> = {}) {
-	return render(AppShell, {
-		props: {
-			open: true,
-			mobileOpen: false,
-			...props
-		}
-	}).body;
+function renderShell() {
+	return render(AppShell, { props: {} }).body;
 }
 
 describe('AppShell rendered output', () => {
-	it('renders the required shell hooks and topbar controls', () => {
+	it('renders the app shell with header and board area', () => {
 		const html = renderShell();
 
+		// Core shell structure
 		expect(html).toContain('data-testid="app-shell"');
-		expect(html).toContain('data-testid="app-sidebar"');
-		expect(html).toContain('data-testid="app-topbar"');
-		expect(html).toContain('data-testid="main-view"');
-		expect(html).toContain('aria-label="Toggle sidebar"');
-		expect(html).toContain('aria-label="切换主题"');
+		
+		// Header elements
+		expect(html).toContain('PlankCN');
+		expect(html).toContain('搜索卡片...');
+		
+		// Key action buttons
+		expect(html).toContain('aria-label="重置布局"');
+		expect(html).toContain('aria-label="清空看板"');
+		expect(html).toContain('aria-label="上传背景"');
+		expect(html).toContain('aria-label="设置"');
 		expect(html).toContain('aria-label="切换亮暗模式"');
-		expect(html).toContain('data-slot="sidebar-inset"');
 	});
 
-	it('renders empty sidebar and main-view containers without placeholder copy', () => {
-		const html = renderShell({ open: false });
+	it('renders the board container area', () => {
+		const html = renderShell();
 
-		expect(html).toContain('data-testid="app-sidebar"');
-		expect(html).toContain('data-testid="main-view" class="min-h-0 min-w-0 flex-1 overflow-auto"');
-		expect(html).toContain('data-state="collapsed"');
-		expect(html).toContain('data-collapsible="offcanvas"');
-		expect(html).not.toContain('TaskFlux');
-		expect(html).not.toContain('placeholder');
-		expect(html).not.toContain('Sidebar.Header');
-		expect(html).not.toContain('Sidebar.Content');
+		// Main board rendering structure
+		expect(html).toContain('data-testid="app-shell"');
+		expect(html).toContain('<main');
+		expect(html).toContain('overflow-hidden');
 	});
 });

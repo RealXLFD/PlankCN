@@ -26,17 +26,27 @@
 		detailOpen = true;
 	}
 
+	function handleKeyDown(e: KeyboardEvent) {
+		if (e.key === ' ') {
+			if ((e.target as HTMLElement).closest('[data-grip]')) return;
+			e.preventDefault();
+			detailOpen = true;
+		}
+	}
+
 	function formatDueDate(ts: number): string {
 		const d = new Date(ts);
 		return `${d.getMonth() + 1}/${d.getDate()}`;
 	}
 </script>
 
-<!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
 	class="group relative cursor-pointer rounded-xl border border-border/40 bg-background/50 shadow transition-[box-shadow,border-color] hover:-translate-y-0.5 hover:shadow-md hover:border-primary/20 active:scale-[0.98] dark:bg-card/80"
 	style="backdrop-filter: blur({Math.max(settings.blurLevel - 4, 0)}px); -webkit-backdrop-filter: blur({Math.max(settings.blurLevel - 4, 0)}px);"
+	role="button"
+	tabindex="0"
 	onclick={handleClick}
+	onkeydown={handleKeyDown}
 >
 	<!-- Cover color bar -->
 	{#if card.coverColor}

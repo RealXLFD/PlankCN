@@ -55,17 +55,17 @@ describe("themeStore", () => {
 		themeStore.setTheme("slate");
 
 		expect(document.documentElement.getAttribute("data-theme")).toBe("slate");
-		expect(window.localStorage.getItem("shadcn-startup-theme")).toBe("slate");
+		expect(window.localStorage.getItem("trellocn-theme")).toBe("slate");
 
 		themeStore.setTheme("zinc");
 
 		expect(document.documentElement.hasAttribute("data-theme")).toBe(false);
-		expect(window.localStorage.getItem("shadcn-startup-theme")).toBe("zinc");
+		expect(window.localStorage.getItem("trellocn-theme")).toBe("zinc");
 	});
 
 	it("restores the saved theme and dark mode on init", () => {
-		window.localStorage.setItem("shadcn-startup-theme", "stone");
-		window.localStorage.setItem("shadcn-startup-mode", "dark");
+		window.localStorage.setItem("trellocn-theme", "stone");
+		window.localStorage.setItem("trellocn-mode", "dark");
 
 		themeStore.init();
 

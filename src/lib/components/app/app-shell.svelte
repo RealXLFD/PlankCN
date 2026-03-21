@@ -79,6 +79,7 @@
 			<input
 				bind:value={search.query}
 				placeholder="搜索卡片..."
+				aria-label="搜索卡片"
 				class="min-w-0 flex-1 bg-transparent text-sm placeholder:text-muted-foreground/50 focus:outline-none"
 			/>
 			{#if search.query}
@@ -117,16 +118,22 @@
 					onclick={handleSettingsClick}
 					class="flex h-8 w-8 items-center justify-center rounded-md border border-border/50 shadow-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground dark:bg-secondary/50 dark:shadow-none"
 					aria-label="设置"
+					aria-expanded={showSettings}
+					aria-haspopup="true"
 				>
 					<SettingsIcon class="h-4 w-4" />
 				</button>
 				{#if showSettings}
 					<div
 						bind:this={settingsPanel}
+						role="dialog"
+						aria-label="设置面板"
+						tabindex="-1"
 						class="absolute right-0 mt-2 w-64 rounded-xl border bg-popover p-4 shadow-lg"
 						style="z-index: 9999;"
 						onclick={(e) => e.stopPropagation()}
 						onpointerdown={(e) => e.stopPropagation()}
+						onkeydown={(e) => { if (e.key === 'Escape') showSettings = false; }}
 					>
 						<div class="text-xs font-medium text-muted-foreground mb-3">面板模糊度</div>
 						<div class="flex items-center gap-3">
@@ -173,9 +180,23 @@
 	</main>
 
 	{#if showResetConfirm}
-		<div class="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 backdrop-blur-sm" onclick={() => showResetConfirm = false}>
-			<div class="rounded-xl border bg-popover p-6 shadow-xl" onclick={(e) => e.stopPropagation()}>
-				<h2 class="text-lg font-semibold mb-2">确认清空看板？</h2>
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
+		<div
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby="reset-confirm-title"
+			tabindex="-1"
+			class="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+			onclick={() => showResetConfirm = false}
+			onkeydown={(e) => { if (e.key === 'Escape') showResetConfirm = false; }}
+		>
+			<!-- svelte-ignore a11y_no_static_element_interactions -->
+			<div
+				class="rounded-xl border bg-popover p-6 shadow-xl"
+				onclick={(e) => e.stopPropagation()}
+				onkeydown={(e) => e.stopPropagation()}
+			>
+				<h2 id="reset-confirm-title" class="text-lg font-semibold mb-2">确认清空看板？</h2>
 				<p class="text-sm text-muted-foreground mb-4">此操作将删除所有列表并恢复为默认状态，无法撤销。</p>
 				<div class="flex justify-end gap-2">
 					<button
@@ -191,10 +212,24 @@
 		</div>
 	{/if}
 
-	{#if showResetLayoutConfirm}
-		<div class="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 backdrop-blur-sm" onclick={() => showResetLayoutConfirm = false}>
-			<div class="rounded-xl border bg-popover p-6 shadow-xl" onclick={(e) => e.stopPropagation()}>
-				<h2 class="text-lg font-semibold mb-2">重置布局</h2>
+{#if showResetLayoutConfirm}
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
+		<div
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby="reset-layout-title"
+			tabindex="-1"
+			class="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+			onclick={() => showResetLayoutConfirm = false}
+			onkeydown={(e) => { if (e.key === 'Escape') showResetLayoutConfirm = false; }}
+		>
+			<!-- svelte-ignore a11y_no_static_element_interactions -->
+			<div
+				class="rounded-xl border bg-popover p-6 shadow-xl"
+				onclick={(e) => e.stopPropagation()}
+				onkeydown={(e) => e.stopPropagation()}
+			>
+				<h2 id="reset-layout-title" class="text-lg font-semibold mb-2">重置布局</h2>
 				<p class="text-sm text-muted-foreground mb-4">此操作将所有列表重新排列为默认布局，列表内容不会丢失。</p>
 				<div class="flex justify-end gap-2">
 					<button

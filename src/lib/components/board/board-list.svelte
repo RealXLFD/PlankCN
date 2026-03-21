@@ -37,7 +37,6 @@
 	let newCardInput: HTMLInputElement | undefined = $state();
 	let inputFocused = $state(false);
 	let inputExpanded = $state(false);
-	let hoverTimer: ReturnType<typeof setTimeout> | null = null;
 	let collapseTimer: ReturnType<typeof setTimeout> | null = null;
 	let editingTitle = $state(false);
 	let editTitleValue = $state('');
@@ -55,13 +54,7 @@
 		requestAnimationFrame(() => newCardInput?.focus());
 	}
 
-	function startHoverExpand() {
-		if (inputExpanded) { clearCollapseTimer(); return; }
-		hoverTimer = setTimeout(expandInput, 300);
-	}
-
 	function cancelHoverExpand() {
-		if (hoverTimer) { clearTimeout(hoverTimer); hoverTimer = null; }
 		if (!inputFocused && inputExpanded) scheduleCollapse();
 	}
 
@@ -111,12 +104,17 @@
 	}
 
 	function transformCardDraggedElement(element: HTMLElement) {
-		// element 是flip动画的包装器div，内部是卡片内容
+		const scale = settings.viewScale / 100;
+		const baseWidth = 320;
+		const scaledWidth = baseWidth * scale;
+		
 		element.style.setProperty('border', 'none', 'important');
 		element.style.setProperty('outline', 'none', 'important');
 		element.style.setProperty('box-shadow', '0 15px 35px -5px rgba(0, 0, 0, 0.25)', 'important');
+		element.style.setProperty('width', `${scaledWidth}px`, 'important');
+		element.style.setProperty('min-width', `${scaledWidth}px`, 'important');
+		element.style.setProperty('max-width', `${scaledWidth}px`, 'important');
 		
-		// 找到内部的卡片容器并移除边框
 		const cardContainer = element.querySelector('.rounded-xl');
 		if (cardContainer) {
 			const cardEl = cardContainer as HTMLElement;
@@ -124,7 +122,6 @@
 			cardEl.style.setProperty('outline', 'none', 'important');
 		}
 		
-		// 移除所有子元素的边框
 		element.querySelectorAll('*').forEach((child) => {
 			const el = child as HTMLElement;
 			el.style.setProperty('border', 'none', 'important');
@@ -143,7 +140,6 @@
 		document.addEventListener('click', handleGlobalClick, true);
 		return () => {
 			document.removeEventListener('click', handleGlobalClick, true);
-			if (hoverTimer) clearTimeout(hoverTimer);
 			clearCollapseTimer();
 		};
 	});
@@ -276,7 +272,7 @@
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<div
 			class="mt-2"
-			onmouseenter={startHoverExpand}
+			onmouseenter={expandInput}
 			onmouseleave={cancelHoverExpand}
 		>
 			<div
