@@ -1,10 +1,17 @@
 <script lang="ts">
-	import PlusIcon from "@lucide/svelte/icons/plus";
-	import TrashIcon from "@lucide/svelte/icons/trash-2";
 	import GripVerticalIcon from "@lucide/svelte/icons/grip-vertical";
 	import MoreHorizontalIcon from "@lucide/svelte/icons/more-horizontal";
+	import TrashIcon from "@lucide/svelte/icons/trash-2";
+	import PlusIcon from "@lucide/svelte/icons/plus";
+	import { onMount } from "svelte";
 	import type { List, Card } from "$lib/stores/board.svelte";
+	import { getSettingsStore } from "$lib/stores/board.svelte";
+	import { dndzone, SHADOW_ITEM_MARKER_PROPERTY_NAME } from "$lib/utils/dnd";
 	import BoardCard from "./board-card.svelte";
+
+	const settings = getSettingsStore();
+	const FLIP_DURATION_MS = 200;
+	const COLLAPSE_DELAY = 1000;
 
 	let {
 		list,
@@ -13,158 +20,171 @@
 		onaddcard,
 		onremovecard,
 		onupdatecard,
-		onmovecard,
-		onreordercard,
-		ondragliststart,
-		ondraglistend,
-		dragState,
+		onsetcards,
+		ondragstart,
 	}: {
 		list: List;
 		onremovelist: () => void;
 		onrenamelist: (title: string) => void;
 		onaddcard: (title: string, description?: string) => void;
 		onremovecard: (cardId: string) => void;
-		onupdatecard: (cardId: string, updates: Partial<Pick<Card, 'title' | 'description'>>) => void;
-		onmovecard: (cardId: string, toIndex: number) => void;
-		onreordercard: (fromIndex: number, toIndex: number) => void;
-		ondragliststart: (e: DragEvent) => void;
-		ondraglistend: (e: DragEvent) => void;
-		dragState: { draggingCardId: string | null; sourceListId: string | null };
+		onupdatecard: (cardId: string, updates: Partial<Pick<Card, 'title' | 'description' | 'labels' | 'dueDate' | 'coverColor'>>) => void;
+		onsetcards: (cards: Card[]) => void;
+		ondragstart?: (e: MouseEvent) => void;
 	} = $props();
 
-	let addingCard = $state(false);
 	let newCardTitle = $state('');
-	let newCardInput: HTMLTextAreaElement | undefined = $state();
+	let newCardInput: HTMLInputElement | undefined = $state();
+	let inputFocused = $state(false);
+	let inputExpanded = $state(false);
+	let hoverTimer: ReturnType<typeof setTimeout> | null = null;
+	let collapseTimer: ReturnType<typeof setTimeout> | null = null;
 	let editingTitle = $state(false);
 	let editTitleValue = $state('');
 	let titleInput: HTMLInputElement | undefined = $state();
 	let showMenu = $state(false);
-	let dropIndicatorIndex = $state<number | null>(null);
+	let menuBtn: HTMLButtonElement | undefined = $state();
+	let menuPanel: HTMLDivElement | undefined = $state();
+	let dragInProgress = $state(false);
+	let dndCards = $state<any[]>([]);
 
-	function startAddCard() {
-		addingCard = true;
-		newCardTitle = '';
-		requestAnimationFrame(() => {
-			newCardInput?.focus();
+	// --- Add card input expand/collapse ---
+	function expandInput() {
+		clearCollapseTimer();
+		inputExpanded = true;
+		requestAnimationFrame(() => newCardInput?.focus());
+	}
+
+	function startHoverExpand() {
+		if (inputExpanded) { clearCollapseTimer(); return; }
+		hoverTimer = setTimeout(expandInput, 300);
+	}
+
+	function cancelHoverExpand() {
+		if (hoverTimer) { clearTimeout(hoverTimer); hoverTimer = null; }
+		if (!inputFocused && inputExpanded) scheduleCollapse();
+	}
+
+	function scheduleCollapse() {
+		clearCollapseTimer();
+		collapseTimer = setTimeout(() => {
+			if (!inputFocused) inputExpanded = false;
+		}, COLLAPSE_DELAY);
+	}
+
+	function clearCollapseTimer() {
+		if (collapseTimer) { clearTimeout(collapseTimer); collapseTimer = null; }
+	}
+
+	function handleInputFocus() {
+		inputFocused = true;
+		inputExpanded = true;
+		clearCollapseTimer();
+	}
+
+	function handleInputBlur() {
+		inputFocused = false;
+		// 提交卡片（如果存在内容）
+		if (newCardTitle.trim()) {
+			submitCard();
+		}
+		scheduleCollapse();
+	}
+
+	// --- DnD ---
+	$effect(() => {
+		if (!dragInProgress) {
+			dndCards = list.cards.map((c) => ({ ...c }));
+		}
+	});
+
+	function handleCardConsider(e: CustomEvent) {
+		dragInProgress = true;
+		dndCards = e.detail.items;
+	}
+
+	function handleCardFinalize(e: CustomEvent) {
+		dndCards = e.detail.items;
+		const realItems = dndCards.filter((c: any) => !c[SHADOW_ITEM_MARKER_PROPERTY_NAME]);
+		onsetcards(realItems);
+		requestAnimationFrame(() => { dragInProgress = false; });
+	}
+
+	function transformCardDraggedElement(element: HTMLElement) {
+		// element 是flip动画的包装器div，内部是卡片内容
+		element.style.setProperty('border', 'none', 'important');
+		element.style.setProperty('outline', 'none', 'important');
+		element.style.setProperty('box-shadow', '0 15px 35px -5px rgba(0, 0, 0, 0.25)', 'important');
+		
+		// 找到内部的卡片容器并移除边框
+		const cardContainer = element.querySelector('.rounded-xl');
+		if (cardContainer) {
+			const cardEl = cardContainer as HTMLElement;
+			cardEl.style.setProperty('border', 'none', 'important');
+			cardEl.style.setProperty('outline', 'none', 'important');
+		}
+		
+		// 移除所有子元素的边框
+		element.querySelectorAll('*').forEach((child) => {
+			const el = child as HTMLElement;
+			el.style.setProperty('border', 'none', 'important');
+			el.style.setProperty('outline', 'none', 'important');
 		});
 	}
+
+	// --- Menu ---
+	onMount(() => {
+		function handleGlobalClick(e: MouseEvent) {
+			if (!showMenu) return;
+			const target = e.target as Node;
+			if (menuPanel?.contains(target) || menuBtn?.contains(target)) return;
+			showMenu = false;
+		}
+		document.addEventListener('click', handleGlobalClick, true);
+		return () => {
+			document.removeEventListener('click', handleGlobalClick, true);
+			if (hoverTimer) clearTimeout(hoverTimer);
+			clearCollapseTimer();
+		};
+	});
 
 	function submitCard() {
 		const trimmed = newCardTitle.trim();
 		if (trimmed) {
 			onaddcard(trimmed);
 			newCardTitle = '';
-			requestAnimationFrame(() => {
-				newCardInput?.focus();
-			});
-		} else {
-			addingCard = false;
+			requestAnimationFrame(() => newCardInput?.focus());
 		}
-	}
-
-	function cancelAdd() {
-		addingCard = false;
-		newCardTitle = '';
 	}
 
 	function startEditTitle() {
 		editTitleValue = list.title;
 		editingTitle = true;
-		requestAnimationFrame(() => {
-			titleInput?.focus();
-			titleInput?.select();
-		});
+		requestAnimationFrame(() => { titleInput?.focus(); titleInput?.select(); });
 	}
 
 	function saveTitle() {
 		const trimmed = editTitleValue.trim();
-		if (trimmed && trimmed !== list.title) {
-			onrenamelist(trimmed);
-		}
+		if (trimmed && trimmed !== list.title) onrenamelist(trimmed);
 		editingTitle = false;
-	}
-
-	function handleCardDragStart(e: DragEvent, cardId: string, cardIndex: number) {
-		if (!e.dataTransfer) return;
-		e.dataTransfer.effectAllowed = 'move';
-		e.dataTransfer.setData('text/card-id', cardId);
-		e.dataTransfer.setData('text/source-list-id', list.id);
-		e.dataTransfer.setData('text/source-index', String(cardIndex));
-		dragState.draggingCardId = cardId;
-		dragState.sourceListId = list.id;
-	}
-
-	function handleCardDragEnd(_e: DragEvent) {
-		dragState.draggingCardId = null;
-		dragState.sourceListId = null;
-		dropIndicatorIndex = null;
-	}
-
-	function getDropIndex(e: DragEvent, cardEl: HTMLElement, index: number): number {
-		const rect = cardEl.getBoundingClientRect();
-		const midY = rect.top + rect.height / 2;
-		return e.clientY < midY ? index : index + 1;
-	}
-
-	function handleDragOver(e: DragEvent, index: number) {
-		if (!dragState.draggingCardId) return;
-		e.preventDefault();
-		e.stopPropagation();
-		if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
-		const cardEl = (e.currentTarget as HTMLElement);
-		dropIndicatorIndex = getDropIndex(e, cardEl, index);
-	}
-
-	function handleDragOverEmpty(e: DragEvent) {
-		if (!dragState.draggingCardId) return;
-		e.preventDefault();
-		if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
-		if (list.cards.length === 0) {
-			dropIndicatorIndex = 0;
-		} else {
-			dropIndicatorIndex = list.cards.length;
-		}
-	}
-
-	function handleDrop(e: DragEvent, targetIndex: number) {
-		e.preventDefault();
-		e.stopPropagation();
-		if (!e.dataTransfer) return;
-		const cardId = e.dataTransfer.getData('text/card-id');
-		const sourceListId = e.dataTransfer.getData('text/source-list-id');
-		const sourceIndex = parseInt(e.dataTransfer.getData('text/source-index'), 10);
-
-		if (!cardId) return;
-
-		if (sourceListId === list.id) {
-			onreordercard(sourceIndex, targetIndex > sourceIndex ? targetIndex - 1 : targetIndex);
-		} else {
-			onmovecard(cardId, targetIndex);
-		}
-		dropIndicatorIndex = null;
-	}
-
-	function handleDragLeave(e: DragEvent) {
-		const el = e.currentTarget as HTMLElement;
-		const related = e.relatedTarget as Node | null;
-		if (!related || !el.contains(related)) {
-			dropIndicatorIndex = null;
-		}
 	}
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
-	class="flex h-fit max-h-full w-80 shrink-0 flex-col rounded-xl border bg-muted/50"
-	draggable="true"
-	ondragstart={ondragliststart}
-	ondragend={ondraglistend}
+	class="flex h-fit max-h-full w-80 shrink-0 flex-col rounded-xl border border-border/50 bg-background/40 shadow-lg dark:bg-card/60"
+	style="backdrop-filter: blur({settings.blurLevel}px); -webkit-backdrop-filter: blur({settings.blurLevel}px);"
 >
 	<!-- Header -->
-	<div class="flex items-center gap-1.5 px-3 pt-3 pb-1.5">
-		<div class="cursor-grab opacity-40 hover:opacity-70 active:cursor-grabbing">
-			<GripVerticalIcon class="h-4 w-4" />
-		</div>
+	<div 
+		class="flex items-center gap-1.5 px-3 pt-3 pb-2 {ondragstart ? 'cursor-grab' : ''}"
+		onmousedown={ondragstart}
+	>
+		{#if ondragstart}
+			<div class="opacity-40 hover:opacity-70">
+				<GripVerticalIcon class="h-4 w-4" />
+			</div>
+		{/if}
 		{#if editingTitle}
 			<input
 				bind:this={titleInput}
@@ -174,29 +194,30 @@
 					if (e.key === 'Enter') saveTitle();
 					if (e.key === 'Escape') { editingTitle = false; }
 				}}
-				class="flex-1 rounded border bg-card px-2 py-1 text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-ring"
+				class="flex-1 rounded bg-transparent px-2 py-1 text-sm font-semibold focus:outline-none"
 			/>
 		{:else}
 			<button
-				class="flex-1 cursor-text rounded px-2 py-1 text-left text-sm font-semibold hover:bg-accent"
+				class="flex-1 cursor-text rounded px-2 py-1 text-left text-sm font-semibold"
 				ondblclick={startEditTitle}
 			>
 				{list.title}
 			</button>
 		{/if}
+		<span class="rounded-full bg-foreground/10 px-2 py-0.5 text-xs text-muted-foreground">{list.cards.length}</span>
 		<div class="relative">
 			<button
+				bind:this={menuBtn}
 				onclick={() => showMenu = !showMenu}
-				class="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+				class="rounded-md p-1 text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
 				aria-label="列表菜单"
 			>
 				<MoreHorizontalIcon class="h-4 w-4" />
 			</button>
 			{#if showMenu}
-				<!-- svelte-ignore a11y_no_static_element_interactions -->
 				<div
-					class="absolute right-0 z-50 mt-1 w-40 rounded-lg border bg-popover p-1.5 shadow-md"
-					onclick={(e) => e.stopPropagation()}
+					bind:this={menuPanel}
+					class="absolute right-0 z-50 mt-1 w-40 rounded-xl border bg-popover backdrop-blur-xl p-1.5 shadow-md"
 				>
 					<button
 						onclick={() => { startEditTitle(); showMenu = false; }}
@@ -212,81 +233,92 @@
 						删除列表
 					</button>
 				</div>
-				<!-- svelte-ignore a11y_no_static_element_interactions -->
-				<div class="fixed inset-0 z-40" onclick={() => showMenu = false}></div>
 			{/if}
 		</div>
 	</div>
 
-	<!-- Cards -->
-	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<div
-		class="flex flex-1 flex-col gap-2 overflow-y-auto px-3 py-1.5"
-		ondragover={handleDragOverEmpty}
-		ondragleave={handleDragLeave}
-		ondrop={(e) => handleDrop(e, list.cards.length)}
-		role="list"
-	>
-		{#each list.cards as card, i (card.id)}
-			<div>
-				{#if dropIndicatorIndex === i}
-					<div class="h-1 rounded-full bg-primary/60 transition-all"></div>
-				{/if}
-				<!-- svelte-ignore a11y_no_static_element_interactions -->
-				<div
-					ondragover={(e) => handleDragOver(e, i)}
-					ondrop={(e) => handleDrop(e, i)}
-					class={dragState.draggingCardId === card.id ? 'opacity-30' : ''}
-				>
-					<BoardCard
-						{card}
-						onremove={() => onremovecard(card.id)}
-						onupdate={(updates) => onupdatecard(card.id, updates)}
-						ondragstart={(e) => handleCardDragStart(e, card.id, i)}
-						ondragend={handleCardDragEnd}
-					/>
+	<!-- Cards DnD zone -->
+	<div class="flex flex-col px-3 pb-3">
+		<div
+			class="flex flex-col gap-2"
+			style="min-height: 44px;"
+			use:dndzone={{
+				items: dndCards,
+				flipDurationMs: FLIP_DURATION_MS,
+				type: 'cards',
+				dropTargetStyle: { outline: 'none', border: 'none', 'box-shadow': 'none' },
+				dropTargetClasses: ['dnd-card-drop-target'],
+				dropAnimationDisabled: true,
+				morphDisabled: true,
+				centreDraggedOnCursor: true,
+				transformDraggedElement: transformCardDraggedElement,
+				onConsider: handleCardConsider,
+				onFinalize: handleCardFinalize,
+			}}
+		>
+			{#each dndCards as card (card.id)}
+				<div>
+					{#if card[SHADOW_ITEM_MARKER_PROPERTY_NAME]}
+						<div class="h-10 rounded-xl bg-primary/5"></div>
+					{:else}
+						<BoardCard
+							{card}
+							listTitle={list.title}
+							onremove={() => onremovecard(card.id)}
+							onupdate={(updates) => onupdatecard(card.id, updates)}
+						/>
+					{/if}
 				</div>
-			</div>
-		{/each}
-		{#if dropIndicatorIndex !== null && dropIndicatorIndex >= list.cards.length}
-			<div class="h-1 rounded-full bg-primary/60 transition-all"></div>
-		{/if}
-	</div>
+			{/each}
+		</div>
 
-	<!-- Add card -->
-	<div class="px-3 pb-3 pt-1.5">
-		{#if addingCard}
-			<div class="space-y-2">
-				<textarea
-					bind:this={newCardInput}
-					bind:value={newCardTitle}
-					placeholder="输入卡片标题..."
-					rows="2"
-					class="w-full resize-none rounded-lg border bg-card px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-					onkeydown={(e) => {
-						if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitCard(); }
-						if (e.key === 'Escape') cancelAdd();
-					}}
-				></textarea>
-				<div class="flex gap-1.5">
-					<button
-						onclick={submitCard}
-						class="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-					>添加</button>
-					<button
-						onclick={cancelAdd}
-						class="rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-accent"
-					>取消</button>
+		<!-- Add card button -->
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
+		<div
+			class="mt-2"
+			onmouseenter={startHoverExpand}
+			onmouseleave={cancelHoverExpand}
+		>
+			<div
+				class="relative transition-all duration-300 ease-in-out"
+				style="
+					width: {inputExpanded ? '100%' : '36px'};
+					height: {inputExpanded ? '40px' : '36px'};
+					border-radius: 12px;
+				"
+			>
+				<!-- Collapsed: plus button -->
+				<button
+					class="absolute inset-0 flex items-center justify-center border border-border/50 bg-background shadow-sm transition-opacity duration-200 dark:bg-card/80 {inputExpanded ? 'opacity-0 pointer-events-none' : 'opacity-100'}"
+					style="border-radius: inherit;"
+					onclick={expandInput}
+					aria-label="添加卡片"
+				>
+					<PlusIcon class="h-4 w-4 text-muted-foreground" />
+				</button>
+
+				<!-- Expanded: input field -->
+				<div
+					class="absolute inset-0 transition-opacity duration-200 {inputExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none'}"
+					style="border-radius: inherit;"
+				>
+					<input
+						bind:this={newCardInput}
+						bind:value={newCardTitle}
+						placeholder="添加卡片"
+						class="h-full w-full rounded-[inherit] border border-border/50 bg-background px-4 text-sm shadow-sm placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-ring dark:bg-card/80"
+						onkeydown={(e) => {
+							if (e.key === 'Enter') { e.preventDefault(); submitCard(); }
+							if (e.key === 'Escape') { newCardTitle = ''; newCardInput?.blur(); }
+						}}
+						onfocus={handleInputFocus}
+						onblur={handleInputBlur}
+					/>
+					{#if inputFocused}
+						<kbd class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground shadow-sm">Enter</kbd>
+					{/if}
 				</div>
 			</div>
-		{:else}
-			<button
-				onclick={startAddCard}
-				class="flex w-full items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
-			>
-				<PlusIcon class="h-4 w-4" />
-				添加卡片
-			</button>
-		{/if}
+		</div>
 	</div>
 </div>
