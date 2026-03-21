@@ -282,8 +282,8 @@
 			<div
 				class="relative transition-all duration-300 ease-in-out"
 				style="
-					width: {inputExpanded ? '100%' : '36px'};
-					height: {inputExpanded ? '40px' : '36px'};
+					width: {inputExpanded ? '100%' : '40px'};
+					height: 40px;
 					border-radius: 12px;
 				"
 			>
