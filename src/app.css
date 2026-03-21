@@ -40,23 +40,23 @@
 }
 
 .dark {
-  --background: oklch(0.141 0.005 285.823);
+  --background: oklch(0 0 0);
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.21 0.006 285.885);
+  --card: oklch(0.15 0.004 285.823);
   --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.21 0.006 285.885);
+  --popover: oklch(0.15 0.004 285.823);
   --popover-foreground: oklch(0.985 0 0);
   --primary: oklch(0.92 0.004 286.32);
-  --primary-foreground: oklch(0.21 0.006 285.885);
-  --secondary: oklch(0.274 0.006 286.033);
+  --primary-foreground: oklch(0.15 0.004 285.823);
+  --secondary: oklch(0.2 0.004 286.033);
   --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.274 0.006 286.033);
+  --muted: oklch(0.2 0.004 286.033);
   --muted-foreground: oklch(0.705 0.015 286.067);
-  --accent: oklch(0.274 0.006 286.033);
+  --accent: oklch(0.2 0.004 286.033);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
+  --border: oklch(1 0 0 / 15%);
+  --input: oklch(1 0 0 / 20%);
   --ring: oklch(0.552 0.016 285.938);
   --chart-1: oklch(0.879 0.169 91.605);
   --chart-2: oklch(0.769 0.188 70.08);
@@ -435,4 +435,109 @@
   body {
     min-height: 100vh;
   }
+}
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-card-in {
+  animation: card-in 0.2s ease-out;
+}
+
+*:focus-visible {
+  transition: outline-offset 0.15s ease, box-shadow 0.15s ease;
+}
+
+.dnd-card-drop-target,
+.dnd-list-drop-target {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+#dnd-action-dragged-el {
+  opacity: 0.92 !important;
+  box-shadow: 0 20px 40px -8px rgb(0 0 0 / 0.3) !important;
+  cursor: grabbing !important;
+  border: none !important;
+  border-width: 0 !important;
+  outline: none !important;
+  width: 320px !important;
+  min-width: 320px !important;
+  max-width: 320px !important;
+  height: auto !important;
+  min-height: auto !important;
+  border-radius: 0.75rem !important;
+  background: oklch(1 0 0) !important;
+  pointer-events: none !important;
+}
+
+.dark #dnd-action-dragged-el {
+  background: oklch(0.15 0.004 285.823) !important;
+}
+
+#dnd-action-dragged-el *,
+#dnd-action-dragged-el .border,
+#dnd-action-dragged-el .border-border\/40,
+#dnd-action-dragged-el .border-border\/50 {
+  border: none !important;
+  border-width: 0 !important;
+  outline: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  transition: none !important;
+  transform: none !important;
+}
+
+#dnd-action-dragged-el .w-80,
+#dnd-action-dragged-el .flex.h-fit,
+#dnd-action-dragged-el .flex.h-fit.max-h-full {
+  width: 100% !important;
+  min-width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  min-height: auto !important;
+  max-height: none !important;
+  border: none !important;
+  border-width: 0 !important;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+[aria-grabbed="true"] {
+  opacity: 0.4 !important;
+  transition: none !important;
+}
+
+/* New list morph animation */
+@keyframes list-morph-in {
+  0% {
+    opacity: 0;
+    transform: scaleX(0.3) scaleY(0.85);
+    transform-origin: left center;
+    filter: blur(8px);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scaleX(1.02) scaleY(1);
+    filter: blur(2px);
+  }
+  100% {
+    opacity: 1;
+    transform: scaleX(1) scaleY(1);
+    filter: blur(0);
+  }
+}
+
+.animate-list-morph-in {
+  animation: list-morph-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }

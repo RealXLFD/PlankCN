@@ -3,7 +3,8 @@ node_modules
 .storybook
 .tmp
 .vscode
-
+.claude
+.playwright-mcp
 # Output
 .output
 .vercel
@@ -11,11 +12,10 @@ node_modules
 .wrangler
 /.svelte-kit
 /build
-
 # OS
 .DS_Store
 Thumbs.db
-
+audit/
 # Env
 .env
 .env.*

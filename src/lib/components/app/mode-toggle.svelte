@@ -6,6 +6,7 @@
 
 	import { Button } from "$lib/components/ui/button/index.js";
 	import { getThemeStore } from "$lib/stores/theme.svelte";
+	import { getSettingsStore } from "$lib/stores/board.svelte";
 	import {
 		toggleModeWithTransition,
 		type StartViewTransition,
@@ -16,6 +17,7 @@
 	};
 
 	const themeStore = getThemeStore();
+	const settings = getSettingsStore();
 	const isAppearanceTransition =
 		typeof document !== "undefined" &&
 		!window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -25,7 +27,8 @@
 	}
 
 	function performModeSwitch(event?: MouseEvent) {
-		if (!isAppearanceTransition) {
+		// Skip transition animation when background image is set
+		if (!isAppearanceTransition || settings.backgroundImage) {
 			themeStore.cycleMode();
 			return;
 		}
