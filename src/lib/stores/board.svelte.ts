@@ -1,3 +1,11 @@
+export type BackgroundSize = 'cover' | 'contain' | 'fill';
+
+export const BACKGROUND_SIZES: { value: BackgroundSize; label: string }[] = [
+	{ value: 'cover', label: '填充' },
+	{ value: 'contain', label: '适应' },
+	{ value: 'fill', label: '拉伸' },
+];
+
 export const LABEL_COLORS = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink', 'sky'] as const;
 export type LabelColor = (typeof LABEL_COLORS)[number];
 
@@ -109,28 +117,48 @@ function getDefaultBoard(): Board {
 }
 
 let board = $state<Board>(loadBoard());
-let searchQuery = $state('');
-let backgroundImage = $state<string | null>(loadBackground());
-let blurLevel = $state<number>(loadBlurLevel());
-let viewScale = $state<number>(loadViewScale());
-let resetLayoutVersion = $state(0);
+	let searchQuery = $state('');
+	let backgroundImage = $state<string | null>(loadBackground());
+	let blurLevel = $state<number>(loadBlurLevel());
+	let viewScale = $state<number>(loadViewScale());
+	let backgroundSize = $state<BackgroundSize>(loadBackgroundSize());
+	let backgroundCrop = $state<{ x: number; y: number; width: number; height: number }>(loadBackgroundCrop());
+	let resetLayoutVersion = $state(0);
 
-function loadBackground(): string | null {
-	if (typeof window === 'undefined') return null;
-	return localStorage.getItem('trellocn-bg');
-}
+	function loadBackground(): string | null {
+		if (typeof window === 'undefined') return null;
+		return localStorage.getItem('trellocn-bg');
+	}
 
-function loadBlurLevel(): number {
-	if (typeof window === 'undefined') return 12;
-	const v = localStorage.getItem('trellocn-blur');
-	return v ? Number(v) : 12;
-}
+	function loadBlurLevel(): number {
+		if (typeof window === 'undefined') return 12;
+		const v = localStorage.getItem('trellocn-blur');
+		return v ? Number(v) : 12;
+	}
 
-function loadViewScale(): number {
-	if (typeof window === 'undefined') return 100;
-	const v = localStorage.getItem('trellocn-scale');
-	return v ? Number(v) :100;
-}
+	function loadViewScale(): number {
+		if (typeof window === 'undefined') return 100;
+		const v = localStorage.getItem('trellocn-scale');
+		return v ? Number(v) : 100;
+	}
+
+	function loadBackgroundSize(): BackgroundSize {
+		if (typeof window === 'undefined') return 'cover';
+		return (localStorage.getItem('trellocn-bg-size') as BackgroundSize) || 'cover';
+	}
+
+	function loadBackgroundCrop(): { x: number; y: number; width: number; height: number } {
+		if (typeof window === 'undefined') return { x: 0, y: 0, width: 100, height: 100 };
+		const v = localStorage.getItem('trellocn-bg-crop');
+		if (v) {
+			try {
+				return JSON.parse(v);
+			} catch {
+				return { x: 0, y: 0, width: 100, height: 100 };
+			}
+		}
+		return { x: 0, y: 0, width: 100, height: 100 };
+	}
 
 function save() {
 	if (typeof window === 'undefined') return;
@@ -164,6 +192,18 @@ export function getSettingsStore() {
 			viewScale = v;
 			if (typeof window === 'undefined') return;
 			localStorage.setItem('trellocn-scale', String(v));
+		},
+		get backgroundSize() { return backgroundSize; },
+		set backgroundSize(v: BackgroundSize) {
+			backgroundSize = v;
+			if (typeof window === 'undefined') return;
+			localStorage.setItem('trellocn-bg-size', v);
+		},
+		get backgroundCrop() { return backgroundCrop; },
+		set backgroundCrop(v: { x: number; y: number; width: number; height: number }) {
+			backgroundCrop = v;
+			if (typeof window === 'undefined') return;
+			localStorage.setItem('trellocn-bg-crop', JSON.stringify(v));
 		},
 	};
 }

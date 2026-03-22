@@ -11,7 +11,6 @@
 
 	const settings = getSettingsStore();
 	const FLIP_DURATION_MS = 200;
-	const COLLAPSE_DELAY = 1000;
 
 	let {
 		list,
@@ -35,9 +34,6 @@
 
 	let newCardTitle = $state('');
 	let newCardInput: HTMLInputElement | undefined = $state();
-	let inputFocused = $state(false);
-	let inputExpanded = $state(false);
-	let collapseTimer: ReturnType<typeof setTimeout> | null = null;
 	let editingTitle = $state(false);
 	let editTitleValue = $state('');
 	let titleInput: HTMLInputElement | undefined = $state();
@@ -46,43 +42,6 @@
 	let menuPanel: HTMLDivElement | undefined = $state();
 	let dragInProgress = $state(false);
 	let dndCards = $state<any[]>([]);
-
-	// --- Add card input expand/collapse ---
-	function expandInput() {
-		clearCollapseTimer();
-		inputExpanded = true;
-		requestAnimationFrame(() => newCardInput?.focus());
-	}
-
-	function cancelHoverExpand() {
-		if (!inputFocused && inputExpanded) scheduleCollapse();
-	}
-
-	function scheduleCollapse() {
-		clearCollapseTimer();
-		collapseTimer = setTimeout(() => {
-			if (!inputFocused) inputExpanded = false;
-		}, COLLAPSE_DELAY);
-	}
-
-	function clearCollapseTimer() {
-		if (collapseTimer) { clearTimeout(collapseTimer); collapseTimer = null; }
-	}
-
-	function handleInputFocus() {
-		inputFocused = true;
-		inputExpanded = true;
-		clearCollapseTimer();
-	}
-
-	function handleInputBlur() {
-		inputFocused = false;
-		// 提交卡片（如果存在内容）
-		if (newCardTitle.trim()) {
-			submitCard();
-		}
-		scheduleCollapse();
-	}
 
 	// --- DnD ---
 	$effect(() => {
@@ -140,7 +99,6 @@
 		document.addEventListener('click', handleGlobalClick, true);
 		return () => {
 			document.removeEventListener('click', handleGlobalClick, true);
-			clearCollapseTimer();
 		};
 	});
 
@@ -268,53 +226,20 @@
 			{/each}
 		</div>
 
-		<!-- Add card button -->
-		<!-- svelte-ignore a11y_no_static_element_interactions -->
-		<div
-			class="mt-2"
-			onmouseenter={expandInput}
-			onmouseleave={cancelHoverExpand}
-		>
-			<div
-				class="relative transition-all duration-300 ease-in-out"
-				style="
-					width: {inputExpanded ? '100%' : '40px'};
-					height: 40px;
-					border-radius: 12px;
-				"
-			>
-				<!-- Collapsed: plus button -->
-				<button
-					class="absolute inset-0 flex items-center justify-center border border-border/50 bg-background shadow-sm transition-opacity duration-200 dark:bg-card/80 {inputExpanded ? 'opacity-0 pointer-events-none' : 'opacity-100'}"
-					style="border-radius: inherit;"
-					onclick={expandInput}
-					aria-label="添加卡片"
-				>
-					<PlusIcon class="h-4 w-4 text-muted-foreground" />
-				</button>
-
-				<!-- Expanded: input field -->
-				<div
-					class="absolute inset-0 transition-opacity duration-200 {inputExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none'}"
-					style="border-radius: inherit;"
-				>
-					<input
-						bind:this={newCardInput}
-						bind:value={newCardTitle}
-						placeholder="添加卡片"
-						class="h-full w-full rounded-[inherit] border border-border/50 bg-background px-4 text-sm shadow-sm placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-ring dark:bg-card/80"
-						onkeydown={(e) => {
-							if (e.key === 'Enter') { e.preventDefault(); submitCard(); }
-							if (e.key === 'Escape') { newCardTitle = ''; newCardInput?.blur(); }
-						}}
-						onfocus={handleInputFocus}
-						onblur={handleInputBlur}
-					/>
-					{#if inputFocused}
-						<kbd class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground shadow-sm">Enter</kbd>
-					{/if}
-				</div>
-			</div>
+<div class="mt-2 px-3">
+			<input
+				bind:this={newCardInput}
+				bind:value={newCardTitle}
+				placeholder="添加卡片"
+				class="w-full rounded-xl border border-border/50 bg-background/50 px-4 py-2.5 text-sm shadow-sm placeholder:text-muted-foreground/30 focus:outline-none focus:ring-1 focus:ring-ring dark:bg-card/80"
+				onkeydown={(e) => {
+					if (e.key === 'Enter') { e.preventDefault(); submitCard(); }
+					if (e.key === 'Escape') { newCardTitle = ''; newCardInput?.blur(); }
+				}}
+				onblur={() => {
+					if (newCardTitle.trim()) submitCard();
+				}}
+			/>
 		</div>
 	</div>
 </div>

@@ -10,14 +10,19 @@
 	import Grid3X3Icon from "@lucide/svelte/icons/layout-grid";
 	import { getSearchStore, getSettingsStore, getBoardStore } from "$lib/stores/board.svelte";
 	import { onMount } from "svelte";
+	import BackgroundEditor from "./background-editor.svelte";
 
 	const search = getSearchStore();
 	const settings = getSettingsStore();
 	const store = getBoardStore();
 
-	let showSettings = $state(false);
+let showSettings = $state(false);
 	let showResetConfirm = $state(false);
 	let showResetLayoutConfirm = $state(false);
+	let showBackgroundEditor = $state(false);
+	let showBgContextMenu = $state(false);
+	let bgContextMenuPos = $state({ x: 0, y: 0 });
+	let pendingBackgroundImage = $state<string | null>(null);
 	let settingsPanel: HTMLDivElement | undefined = $state();
 	let settingsBtn: HTMLButtonElement | undefined = $state();
 	let fileInput: HTMLInputElement | undefined = $state();
@@ -27,13 +32,35 @@
 		if (!file) return;
 		const reader = new FileReader();
 		reader.onload = () => {
-			settings.backgroundImage = reader.result as string;
+			pendingBackgroundImage = reader.result as string;
+			showBackgroundEditor = true;
 		};
 		reader.readAsDataURL(file);
+		(e.target as HTMLInputElement).value = '';
 	}
 
-	function removeBg() {
-		settings.backgroundImage = null;
+	function handleBgContextMenu(e: MouseEvent) {
+		e.preventDefault();
+		e.stopPropagation();
+		bgContextMenuPos = { x: e.clientX, y: e.clientY };
+		showBgContextMenu = true;
+	}
+
+	function handleBgContextMenuClose() {
+		showBgContextMenu = false;
+	}
+
+	function handleBackgroundSave(bgSettings: { size: BackgroundSize; crop: { x: number; y: number; width: number; height: number } }) {
+		settings.backgroundImage = pendingBackgroundImage;
+		settings.backgroundSize = bgSettings.size;
+		settings.backgroundCrop = bgSettings.crop;
+		showBackgroundEditor = false;
+		pendingBackgroundImage = null;
+	}
+
+	function handleBackgroundCancel() {
+		showBackgroundEditor = false;
+		pendingBackgroundImage = null;
 	}
 
 	function handleSettingsClick(e: MouseEvent) {
@@ -43,11 +70,15 @@
 
 	onMount(() => {
 		function handleGlobalPointerDown(e: PointerEvent) {
-			if (!showSettings) return;
-			const target = e.target as Node;
-			if (settingsPanel?.contains(target)) return;
-			if (settingsBtn?.contains(target)) return;
-			showSettings = false;
+			if (showSettings) {
+				const target = e.target as Node;
+				if (settingsPanel?.contains(target)) return;
+				if (settingsBtn?.contains(target)) return;
+				showSettings = false;
+			}
+			if (showBgContextMenu) {
+				showBgContextMenu = false;
+			}
 		}
 		document.addEventListener('pointerdown', handleGlobalPointerDown);
 		return () => document.removeEventListener('pointerdown', handleGlobalPointerDown);
@@ -57,11 +88,13 @@
 <div class="relative flex h-screen flex-col" data-testid="app-shell">
 	<!-- Background image layer -->
 	{#if settings.backgroundImage}
-		<div class="pointer-events-none absolute inset-0 z-0">
+		{@const crop = settings.backgroundCrop}
+		<div class="pointer-events-none absolute inset-0 z-0 overflow-hidden">
 			<img
 				src={settings.backgroundImage}
 				alt=""
 				class="h-full w-full object-cover"
+				style="object-position: {crop.x + crop.width/2}% {crop.y + crop.height/2}%; clip-path: inset({crop.y}% {100 - crop.x - crop.width}% {100 - crop.y - crop.height}% {crop.x}%); transform: scale({Math.max(100/crop.width, 100/crop.height)});"
 			/>
 		</div>
 	{/if}
@@ -106,11 +139,37 @@
 			<input bind:this={fileInput} type="file" accept="image/*" class="hidden" onchange={handleBgUpload} />
 			<button
 				onclick={() => fileInput?.click()}
+				oncontextmenu={handleBgContextMenu}
 				class="flex h-8 w-8 items-center justify-center rounded-md border border-border/50 shadow-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground dark:bg-secondary/50 dark:shadow-none"
 				aria-label="上传背景"
 			>
 				<ImageIcon class="h-4 w-4" />
 			</button>
+			{#if showBgContextMenu}
+				<div
+					class="fixed z-[10002] min-w-[140px] rounded-lg border border-border/50 bg-popover py-1 shadow-lg"
+					style="left: {bgContextMenuPos.x}px; top: {bgContextMenuPos.y}px;"
+					onclick={(e) => e.stopPropagation()}
+					onkeydown={(e) => e.stopPropagation()}
+				>
+					<button
+						onclick={() => { fileInput?.click(); showBgContextMenu = false; }}
+						class="flex w-full items-center gap-2 px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+					>
+						<ImageIcon class="h-4 w-4" />
+						上传背景
+					</button>
+					{#if settings.backgroundImage}
+						<button
+							onclick={() => { settings.backgroundImage = null; settings.backgroundCrop = { x: 0, y: 0, width: 100, height: 100 }; showBgContextMenu = false; }}
+							class="flex w-full items-center gap-2 px-3 py-2 text-sm text-destructive transition-colors hover:bg-destructive/10"
+						>
+							<Trash2Icon class="h-4 w-4" />
+							删除背景
+						</button>
+					{/if}
+				</div>
+			{/if}
 			<!-- Settings -->
 			<div class="relative" style="z-index: 9999;">
 				<button
@@ -159,12 +218,6 @@
 							/>
 							<span class="w-8 text-right text-xs tabular-nums text-muted-foreground">{settings.viewScale}%</span>
 						</div>
-						{#if settings.backgroundImage}
-							<button
-								onclick={removeBg}
-								class="mt-4 w-full rounded-md border border-destructive/20 px-3 py-1.5 text-xs text-destructive transition-colors hover:bg-destructive/10"
-							>移除背景</button>
-						{/if}
 					</div>
 				{/if}
 			</div>
@@ -247,4 +300,14 @@
 			</div>
 		</div>
 	{/if}
+
+{#if showBackgroundEditor && pendingBackgroundImage}
+	<BackgroundEditor
+		imageUrl={pendingBackgroundImage}
+		initialSize={settings.backgroundSize}
+		initialCrop={settings.backgroundCrop}
+		onSave={handleBackgroundSave}
+		onCancel={handleBackgroundCancel}
+	/>
+{/if}
 </div>

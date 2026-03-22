@@ -23,21 +23,24 @@
 
 	let editTitle = $state('');
 	let editDescription = $state('');
-	let editDueDate = $state('');
 
 	// Portal elements - created dynamically
 	let backdropEl = $state<HTMLDivElement | null>(null);
 	let panelEl = $state<HTMLDivElement | null>(null);
 
 	function saveTitle() {
-		const trimmed = editTitle.trim();
+		const input = panelEl?.querySelector('#title-input') as HTMLInputElement | null;
+		if (!input) return;
+		const trimmed = input.value.trim();
 		if (trimmed && trimmed !== card.title) {
 			onupdate({ title: trimmed });
 		}
 	}
 
 	function saveDescription() {
-		const val = editDescription.trim() || undefined;
+		const textarea = panelEl?.querySelector('#description-input') as HTMLTextAreaElement | null;
+		if (!textarea) return;
+		const val = textarea.value.trim() || undefined;
 		if (val !== (card.description ?? undefined)) {
 			onupdate({ description: val });
 		}
@@ -49,14 +52,6 @@
 			onupdate({ labels: [] });
 		} else {
 			onupdate({ labels: [color] });
-		}
-	}
-
-	function saveDueDate() {
-		if (editDueDate) {
-			onupdate({ dueDate: new Date(editDueDate + 'T23:59:59').getTime() });
-		} else {
-			onupdate({ dueDate: undefined });
 		}
 	}
 
@@ -184,16 +179,6 @@
 							</div>
 						</div>
 						<div>
-							<div class="mb-1.5 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-								<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3"><path d="M8 2v4"></path><path d="M16 2v4"></path><path d="M21 13V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h8"></path><path d="M3 10h18"></path><path d="M16 19h6"></path><path d="M19 16v6"></path></svg>
-								截止日期
-							</div>
-							<div class="flex items-center gap-2">
-								<input id="due-date-input" type="date" value="${editDueDate}" aria-label="截止日期" class="flex-1 rounded-lg border bg-muted/50 px-2.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring" />
-								${editDueDate ? `<button id="clear-date-btn" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20" aria-label="清除日期"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>` : ''}
-							</div>
-						</div>
-						<div>
 							<div class="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
 								<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3"><path d="M12 12h.01"></path><path d="M12 2v1"></path><path d="m6.5 6.5.7.7"></path><path d="M2 12h1"></path><path d="m6.5 17.5.7-.7"></path><path d="M12 21v1"></path><path d="m17.5 17.5-.7-.7"></path><path d="M21 12h-1"></path><path d="m17.5 6.5-.7.7"></path></svg>
 								封面颜色
@@ -234,20 +219,6 @@
 		if (titleInput) {
 			titleInput.onblur = saveTitle;
 			titleInput.onkeydown = handleTitleKeydown;
-		}
-
-		const dueDateInput = panelEl.querySelector('#due-date-input') as HTMLInputElement;
-		if (dueDateInput) {
-			dueDateInput.onchange = saveDueDate;
-		}
-
-		const clearDateBtn = panelEl.querySelector('#clear-date-btn') as HTMLButtonElement | null;
-		if (clearDateBtn) {
-			clearDateBtn.onclick = () => {
-				editDueDate = '';
-				saveDueDate();
-				updatePanelContent();
-			};
 		}
 
 		const descriptionInput = panelEl.querySelector('#description-input') as HTMLTextAreaElement;
@@ -292,8 +263,7 @@
 		if (open) {
 			editTitle = card.title;
 			editDescription = card.description ?? '';
-			editDueDate = card.dueDate ? new Date(card.dueDate).toISOString().split('T')[0] : '';
-			
+
 			document.addEventListener('keydown', closeOnEscape);
 			backdropEl.style.display = 'block';
 			panelEl.style.display = 'block';
